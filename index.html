@@ -2,195 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dune Awakening Mapping Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dune SSA Mapper</title>
   <style>
-    body {
-      background-color: #2c1c0c;
-      color: #f4e2b5;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      text-align: center;
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #000;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(9, 60px);
-      grid-gap: 4px;
-      margin: 20px auto;
-    }
-    .cell {
-      width: 60px;
-      height: 60px;
-      background-color: #3b2a19;
-      border: 1px solid #b1955b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .cell.selected {
-      background-color: #d0a857;
-      color: black;
-    }
-    select, button, input {
-      margin: 8px;
-      padding: 6px;
-      font-size: 14px;
-    }
-    footer {
-      margin-top: 30px;
-      color: #b79e7f;
-      font-size: 0.9em;
-    }
-    #toast {
-      visibility: hidden;
-      min-width: 180px;
-      background-color: #333;
-      color: #fff;
-      text-align: center;
-      border-radius: 4px;
-      padding: 10px;
-      position: fixed;
-      z-index: 999;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.5s, visibility 0.5s;
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
-  <h1>Dune Awakening Mapping Tool</h1>
-  <div id="auth">
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
-    <p id="msg" style="color:red;"></p>
-  </div>
-
-  <div class="grid" id="mapGrid" style="display:none;"></div>
-
-  <div id="interaction-panel" style="display:none;">
-    <p id="cell-label"></p>
-    <input type="text" id="reporter" placeholder="Your Name" /><br/>
-
-    <select id="status">
-      <option value="">-- Select --</option>
-      <option value="enemy">Enemy</option>
-      <option value="ally">Ally</option>
-    </select>
-
-    <div id="ally-options" style="display:none;">
-      <select id="guild">
-        <option value="">-- Guild --</option>
-        <option>High Walls Corp</option>
-        <option>House Orethion</option>
-        <option>House Jablonowski</option>
-        <option>House Erebus</option>
-        <option>House Hyperion</option>
-        <option>Indominus Legion</option>
-      </select>
-      <input type="text" id="activity" placeholder="Activity" />
-    </div>
-
-    <div id="fleet-section" style="display:none;">
-      <input type="text" id="fleet" placeholder="Fleet (required for Enemy)" />
-    </div>
-
-    <button onclick="submitReport()">Send Report</button>
-  </div>
-
-  <footer>Created by <strong>banshee</strong></footer>
-  <div id="toast">Report sent</div>
-
-  <script>
-    const API_BASE = "https://script.google.com/macros/s/AKfycby4A9l79f9xwjD3qttcm_7V6FbkHv--jXSxB-x9WhyNWNLbSv9u3X198tJqO8hBgIK7/exec";
-    let selectedCell = "";
-
-    function login() {
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      fetch(API_BASE + "?mode=login", {
-        method: "POST",
-        body: JSON.stringify({ username: u, password: p }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(r => r.json())
-      .then(ok => {
-        if (ok) {
-          document.getElementById("auth").style.display = "none";
-          document.getElementById("mapGrid").style.display = "grid";
-        } else {
-          document.getElementById("msg").innerText = "Invalid credentials";
-        }
-      });
-    }
-
-    function register() {
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      fetch(API_BASE + "?mode=register", {
-        method: "POST",
-        body: JSON.stringify({ username: u, password: p }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(r => r.text())
-      .then(msg => document.getElementById("msg").innerText = msg);
-    }
-
-    document.getElementById("status").addEventListener("change", () => {
-      const v = document.getElementById("status").value;
-      document.getElementById("ally-options").style.display = v === "ally" ? "block" : "none";
-      document.getElementById("fleet-section").style.display = v ? "block" : "none";
-    });
-
-    function submitReport() {
-      const reporter = document.getElementById("reporter").value;
-      const status = document.getElementById("status").value;
-      const guild = document.getElementById("guild").value;
-      const activity = document.getElementById("activity").value;
-      const fleet = document.getElementById("fleet").value;
-
-      if (!selectedCell || !status || !reporter) return alert("Fill all required fields.");
-      if (status === "enemy" && !fleet) return alert("Fleet is required for enemy!");
-
-      fetch(API_BASE + "?mode=report", {
-        method: "POST",
-        body: JSON.stringify({
-          reporter, location: selectedCell, status, guild, activity, fleet
-        }),
-        headers: { "Content-Type": "application/json" }
-      }).then(() => {
-        document.getElementById("toast").style.visibility = "visible";
-        document.getElementById("toast").style.opacity = "1";
-        setTimeout(() => {
-          document.getElementById("toast").style.opacity = "0";
-          document.getElementById("toast").style.visibility = "hidden";
-        }, 3000);
-      });
-    }
-
-    const grid = document.getElementById("mapGrid");
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        const label = "ABCDEFGHI"[r] + (c + 1);
-        cell.textContent = label;
-        cell.onclick = () => {
-          document.querySelectorAll('.cell').forEach(c => c.classList.remove("selected"));
-          cell.classList.add("selected");
-          selectedCell = label;
-          document.getElementById("interaction-panel").style.display = "block";
-          document.getElementById("cell-label").innerText = "Selected: " + label;
-        };
-        grid.appendChild(cell);
-      }
-    }
-  </script>
+  <iframe src="https://script.google.com/macros/s/AKfycby96H1v1IlOyw3zI3FL0C2PD8WzRRNXMqYD0yAflseJAOUeWKrXODFoJxkkxGTd1e-0rA/exec"></iframe>
 </body>
 </html>
